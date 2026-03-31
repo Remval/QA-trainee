@@ -88,22 +88,23 @@
 sudo apt update
 sudo apt install mysql-server -y
 sudo systemctl status mysql
-'''
+```
 
 ### Шаг 2: Обход защиты (systemd) и создание тестовой среды
 # Останавливаем БД и внедряем бэкдор
 
-'''
+```bash
 sudo systemctl stop mysql
 sudo sed -i '/\[mysqld\]/a skip-grant-tables' /etc/mysql/mysql.conf.d/mysqld.cnf
 sudo systemctl start mysql
-'''
+```
 # Заходим без пароля
+```bash
 sudo mysql -u root
-
+```
 Внутри консоли mysql> выполняем SQL-запросы:
 
-```
+```bash
 FLUSH PRIVILEGES;
 ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'RootPass123!';
 CREATE DATABASE qa_store;
@@ -114,28 +115,28 @@ EXIT;
 ```
 
 # Возвращаем сервер в безопасный режим:
-```
+```bash
 sudo systemctl stop mysql
 sudo sed -i '/skip-grant-tables/d' /etc/mysql/mysql.conf.d/mysqld.cnf
 sudo systemctl start mysql
 ```
 
 ###Шаг 3: Проведение Security Test (RBAC)
-```
+```bash
 mysql -u qa_user -p
 # Вводим пароль: TestPass123!
 ```
 
 # Пытаемся взломать систему (получаем Access denied):
 
-```
+```bash
 USE mysql;
 ```
 Шаг 4: Тестирование Data Integrity
 
 #В консоли ограниченного пользователя создаем таблицу:
 
-```
+```bash
 USE qa_store;
 
 CREATE TABLE customers (
@@ -147,12 +148,12 @@ CREATE TABLE customers (
 
 # Happy Path (Позитивный тест)
 
-```
+```bash
 INSERT INTO customers (email, age) VALUES ('test@example.com', 25);
 ```
 
 # Negative Tests (Проверка ограничений)
-```
+```bash
 INSERT INTO customers (age) VALUES (30); # Ошибка NOT NULL
 INSERT INTO customers (email, age) VALUES ('test@example.com', 40); # Ошибка UNIQUE
 INSERT INTO customers (email, age) VALUES ('young@example.com', 15); # Ошибка CHECK
@@ -163,17 +164,17 @@ EXIT;
 
 #Создаем резервную копию базы данных:
 
-```
+```bash
 mysqldump -u root -p qa_store > qa_store_backup.sql
-# Пароль рута: RootPass123!
 ```
+Пароль рута: RootPass123!
 
 #Имитируем катастрофу (заходим под рутом и удаляем БД):
-```
+```bash
 mysql -u root -p
 ```
 
-```
+```bash
 DROP DATABASE qa_store;
 SHOW DATABASES;
 CREATE DATABASE qa_store;
@@ -182,7 +183,7 @@ EXIT;
 
 #Восстанавливаем данные из дампа и проверяем успешность:
 
-```
+```bash
 mysql -u root -p qa_store < qa_store_backup.sql
 mysql -u root -p -e "USE qa_store; SELECT * FROM customers;"
 ```
