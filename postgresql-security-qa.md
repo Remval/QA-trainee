@@ -86,49 +86,49 @@ sudo systemctl status postgresql
 ### Шаг 2: Создание схем и настройка доступов
 Заходим под системным пользователем postgres:
 
-```
+```bash
 sudo -u postgres psql
 ```
 Создаем базу, изолированную схему и ограниченного пользователя:
 
-```
+```bash
 CREATE DATABASE qa_pg_store;
 ```
-```
+```bash
 \c qa_pg_store
 ```
-```
+```bash
 CREATE SCHEMA admin_secrets;
 CREATE TABLE admin_secrets.keys (key_value VARCHAR(100));
 CREATE USER qa_pg_user WITH PASSWORD 'TestPass123!';
 GRANT CONNECT ON DATABASE qa_pg_store TO qa_pg_user;
 ```
-```
+```bash
 \q
 ```
 ### Шаг 3: Проведение Security Test (Schema Isolation)
 Подключаемся по TCP/IP от лица ограниченного пользователя:
 
-```
+```bash
 psql -h 127.0.0.1 -U qa_pg_user -d qa_pg_store
 ```
 # Пароль: TestPass123!
 
 Пытаемся прочитать секретную схему:
-```
+```bash
 SELECT * FROM admin_secrets.keys;
 ```
 -- Ожидаем: ERROR: permission denied for schema admin_secrets
 
-```
+```bash
 \q
 ```
 ### Шаг 4: Тестирование Data Integrity (Regex)
 Заходим под админом и создаем таблицу с Regex-проверкой:
-```
+```bash
 sudo -u postgres psql -d qa_pg_store
 ```
-```
+```bash
 CREATE TABLE clients (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -137,48 +137,48 @@ CREATE TABLE clients (
 GRANT ALL ON clients TO qa_pg_user;
 GRANT USAGE ON SEQUENCE clients_id_seq TO qa_pg_user;
 ```
-```
+```bash
 \q
 ```
 Заходим под QA-пользователем и проводим тесты:
-```
+```bash
 psql -h 127.0.0.1 -U qa_pg_user -d qa_pg_store
 ```
 -- Happy Path
-```
+```bash
 INSERT INTO clients (name, phone) VALUES ('Ivan', '+380501234567');
 ```
 -- Negative Test (Срабатывание Regex CHECK)
-```
+```bash
 INSERT INTO clients (name, phone) VALUES ('Hacker', '050-123-45-67');
 ```
-```
+```bash
 \q
 ```
 ### Шаг 5: Имитация Disaster Recovery
 Создаем резервную копию:
-```
+```bash
 sudo -u postgres pg_dump qa_pg_store > qa_pg_store_backup.sql
 ```
 Удаляем базу (имитация потери):
-```
+```bash
 sudo -u postgres psql -d postgres
 ```
-```
+```bash
 DROP DATABASE qa_pg_store;
 ```
-```
+```bash
 \l
 ```
-```
+```bash
 \q
 ```
 Восстанавливаем данные из дампа:
-```
+```bash
 sudo -u postgres psql -c "CREATE DATABASE qa_pg_store;"
 sudo -u postgres psql qa_pg_store < qa_pg_store_backup.sql
 ```
 Проверяем восстановленные данные:
-```
+```bash
 sudo -u postgres psql -d qa_pg_store -c "SELECT * FROM clients;"
 ```
