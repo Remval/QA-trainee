@@ -91,14 +91,14 @@ sudo systemctl status mysql
 ```
 
 ### Шаг 2: Обход защиты (systemd) и создание тестовой среды
-# Останавливаем БД и внедряем бэкдор
+Останавливаем БД и внедряем бэкдор
 
 ```bash
 sudo systemctl stop mysql
 sudo sed -i '/\[mysqld\]/a skip-grant-tables' /etc/mysql/mysql.conf.d/mysqld.cnf
 sudo systemctl start mysql
 ```
-# Заходим без пароля
+Заходим без пароля
 ```bash
 sudo mysql -u root
 ```
@@ -114,27 +114,27 @@ FLUSH PRIVILEGES;
 EXIT;
 ```
 
-# Возвращаем сервер в безопасный режим:
+Возвращаем сервер в безопасный режим:
 ```bash
 sudo systemctl stop mysql
 sudo sed -i '/skip-grant-tables/d' /etc/mysql/mysql.conf.d/mysqld.cnf
 sudo systemctl start mysql
 ```
 
-###Шаг 3: Проведение Security Test (RBAC)
+### Шаг 3: Проведение Security Test (RBAC)
 ```bash
 mysql -u qa_user -p
 # Вводим пароль: TestPass123!
 ```
 
-# Пытаемся взломать систему (получаем Access denied):
+Пытаемся взломать систему (получаем Access denied):
 
 ```bash
 USE mysql;
 ```
-Шаг 4: Тестирование Data Integrity
+### Шаг 4: Тестирование Data Integrity
 
-#В консоли ограниченного пользователя создаем таблицу:
+В консоли ограниченного пользователя создаем таблицу:
 
 ```bash
 USE qa_store;
@@ -144,15 +144,17 @@ CREATE TABLE customers (
     email VARCHAR(255) NOT NULL UNIQUE,
     age INT CHECK (age >= 18)
 );
+#Happy Path (Позитивный тест)
 ```
 
-# Happy Path (Позитивный тест)
+
 
 ```bash
 INSERT INTO customers (email, age) VALUES ('test@example.com', 25);
+#Negative Tests (Проверка ограничений)
 ```
 
-# Negative Tests (Проверка ограничений)
+
 ```bash
 INSERT INTO customers (age) VALUES (30); # Ошибка NOT NULL
 INSERT INTO customers (email, age) VALUES ('test@example.com', 40); # Ошибка UNIQUE
@@ -160,16 +162,17 @@ INSERT INTO customers (email, age) VALUES ('young@example.com', 15); # Ошиб�
 EXIT;
 ```
 
-###Шаг 5: Имитация Disaster Recovery
+### Шаг 5: Имитация Disaster Recovery
 
-#Создаем резервную копию базы данных:
+Создаем резервную копию базы данных:
 
 ```bash
 mysqldump -u root -p qa_store > qa_store_backup.sql
+#Пароль рута: RootPass123!
 ```
-Пароль рута: RootPass123!
 
-#Имитируем катастрофу (заходим под рутом и удаляем БД):
+
+Имитируем катастрофу (заходим под рутом и удаляем БД):
 ```bash
 mysql -u root -p
 ```
@@ -181,7 +184,7 @@ CREATE DATABASE qa_store;
 EXIT;
 ```
 
-#Восстанавливаем данные из дампа и проверяем успешность:
+Восстанавливаем данные из дампа и проверяем успешность:
 
 ```bash
 mysql -u root -p qa_store < qa_store_backup.sql
