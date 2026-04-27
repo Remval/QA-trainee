@@ -7,104 +7,101 @@
   <img src="https://img.shields.io/badge/Status-100%25_Passed-brightgreen?style=flat-square" alt="Passed">
 </p>
 
-## 📌 О проекте
+## 📌 Про проект
 
-Этот проект посвящен комплексному тестированию базы данных MySQL, развернутой на "голом железе" (bare-metal сервер Ubuntu). В фокусе тестирования — не просто CRUD-операции, а глубокая проверка механизмов безопасности, изоляции прав доступа, бизнес-ограничений (Constraints) на уровне СУБД и проверка сценария Disaster Recovery.
+Цей проект присвячений комплексному тестуванню бази даних MySQL, розгорнутій на "голому залізі" (bare-metal сервер Ubuntu). У фокусі тестування – не просто CRUD-операції, а глибока перевірка механізмів безпеки, ізоляції прав доступу, бізнес-обмежень (Constraints) на рівні СУБД та перевірка сценарію Disaster Recovery.
 
-**Тестовый стенд:** `Ubuntu 24.04 LTS` | `MySQL 8.x` | `Терминал Linux (CLI)`
-
----
-
-## 📊 Сводка результатов тестирования
-
-| Фаза | Тип тестирования | Описание | Статус |
-|:---|:---|:---|:---:|
-| **1** | `Smoke Test` | Установка и запуск сервиса MySQL | ✅ PASS |
-| **2** | `Security / RBAC` | Изоляция прав пользователя, защита от эскалации привилегий | ✅ PASS |
-| **3** | `Data Integrity` | Проверка ограничений (NOT NULL, UNIQUE, CHECK) | ✅ PASS |
-| **4** | `Disaster Recovery` | Имитация потери БД и полное восстановление из дампа | ✅ PASS |
+**Тестовий стенд:** `Ubuntu 24.04 LTS` | `MySQL 8.x` | `Термінал Linux (CLI)`
 
 ---
 
-## 🛠 Подробные Тест-кейсы и Отчеты
+## 📊 Зведення результатів тестування
 
-### Фаза 1: Установка и Smoke Test
-> **Цель:** Убедиться, что сервис базы данных успешно установлен, работает стабильно и управляется через `systemd`.
-* **Результат:** Сервис запущен (`active (running)`), процесс изолирован штатно.
-<details>
-  <summary>📸 Скриншот: Успешный старт сервиса</summary>
-  
-  ![MySQL Status](images/mysql-status.png)
+| **1** | `Smoke Test` | Встановлення та запуск сервісу MySQL ✅ PASS |
+| **2** | `Security/RBAC` | Ізоляція прав користувача, захист від ескалації привілеїв ✅ PASS |
+| **3** | `Data Integrity` | Перевірка обмежень (NOT NULL, UNIQUE, CHECK) ✅ PASS |
+| **4** | `Disaster Recovery` | Імітація втрати БД та повне відновлення з дампи | ✅ PASS |
+
+---
+
+## 🛠 Детальні Тест-кейси та Звіти
+
+### Фаза 1: Встановлення та Smoke Test
+> **Мета:** Переконатися, що сервіс бази даних успішно встановлений, працює стабільно та керується через `systemd`.
+* **Результат:** Сервіс запущений (`active (running)`), процес ізольований штатно.
+<details> 
+<summary>📸 Скріншот: Успішний старт сервісу</summary> 
+
+![MySQL Status](images/mysql-status.png)
 </details>
 
-### Фаза 2: Тестирование безопасности и прав доступа (Security & RBAC)
-> **Цель:** Провести негативное тестирование контроля доступа. Обычный пользователь не должен иметь доступа к системной БД `mysql`, где хранятся хеши паролей.
+### Фаза 2: Тестування безпеки та прав доступу (Security & RBAC)
+> **Мета:** Провести негативне тестування контролю доступу. Звичайний користувач не повинен мати доступу до системної БД `mysql`, де зберігаються хеші паролів.
 
 #### ⚠️ Траблшутинг (Bypassing systemd auth constraints)
-В процессе настройки среды столкнулся со строгими ограничениями Ubuntu 24.04: локальный рут не имел пароля и блокировался `auth_socket`. 
-* **Решение:** Проведен принудительный обход защиты (Hacker Mode) путем добавления параметра `skip-grant-tables` напрямую в `/etc/mysql/mysql.conf.d/mysqld.cnf`. После успешного сброса пароля `root` и создания тестового юзера с ограниченными правами, уязвимость в конфиге была устранена, а система возвращена в безопасный режим.
+У процесі налаштування середовища зіткнувся зі строгими обмеженнями Ubuntu 24.04: локальний рут не мав пароля і блокувався `auth_socket`.
+* **Рішення:** Проведено примусовий обхід захисту (Hacker Mode) шляхом додавання параметра `skip-grant-tables` безпосередньо в `/etc/mysql/mysql.conf.d/mysqld.cnf`. Після успішного скидання пароля `root` і створення тестового користувача з обмеженими правами, вразливість у конфізі була усунена, а система повернена у безпечний режим.
 
-* **Тест-кейс (Негативный):** Попытка доступа к `mysql` от лица ограниченного `qa_user`.
-* **Ожидаемый / Фактический результат:** Ожидаемый отказ в доступе. Получена ошибка `ERROR 1044 (42000): Access denied for user`. Система безопасности работает корректно.
-<details>
-  <summary>📸 Скриншот: Access Denied (RBAC Test)</summary>
-  
-  ![Access Denied](images/access-denied.png)
+* **Тест-кейс (Негативний):** Спроба доступу до `mysql` від імені обмеженого `qa_user`.
+* **Очікуваний / Фактичний результат:** Очікувана відмова у доступі. Отримана помилка `ERROR 1044 (42000): Access denied for user`. Система безпеки працює коректно.
+<details> 
+<summary>📸 Скріншот: Access Denied (RBAC Test)</summary> 
+
+![Access Denied](images/access-denied.png)
 </details>
 
-### Фаза 3: Тестирование целостности данных (Data Integrity Testing)
-> **Цель:** Проверка того, что БД самостоятельно блокирует некорректные данные, защищая бизнес-логику даже при отсутствии валидации на бэкенде.
+### Фаза 3: Тестування цілісності даних (Data Integrity Testing)
+> **Мета:** Перевірка того, що БД самостійно блокує некоректні дані, захищаючи бізнес-логіку навіть за відсутності валідації на бекенді.
 
-Создана таблица `customers` со строгими ограничениями: `email NOT NULL UNIQUE` и возраст `age CHECK (>= 18)`. Проведены негативные тесты (попытки вставки невалидных данных):
-1. **Тест NOT NULL:** Попытка создать юзера без email -> `ERROR 1364: Field 'email' doesn't have a default value`.
-2. **Тест UNIQUE:** Попытка вставить дубликат email -> `ERROR 1062: Duplicate entry`.
-3. **Тест CHECK:** Попытка добавить 15-летнего пользователя -> `ERROR 3819: Check constraint is violated`.
-* **Результат:** БД успешно отбила все 3 попытки нарушения целостности данных.
-<details>
-  <summary>📸 Скриншоты: Срабатывание Constraints (Ошибки вставки)</summary>
-  
-  ![Constraints Test 1](images/constraint-1.png)
-  ![Constraints Test 2](images/constraint-2.png)
+Створено таблицю `customers` зі строгими обмеженнями: `email NOT NULL UNIQUE` та вік `age CHECK (>= 18)`. Проведено негативні тести (спроби вставки невалідних даних):
+1. **Тест NOT NULL:** Спроба створити користувача без email -> `ERROR 1364: Field 'email' не має default value`.
+2. **Тест UNIQUE:** Спроба вставити дублікат email -> `ERROR 1062: Duplicate entry`.
+3. **Тест CHECK:** Спроба додати 15-річного користувача -> `ERROR 3819: Check constraint is violated`.
+* **Результат:** БД успішно відбила всі 3 спроби порушення цілісності даних.
+<details> 
+<summary>📸 Скріншоти: Спрацювання Constraints (Помилки вставки)</summary> 
+
+![Constraints Test 1](images/constraint-1.png) 
+![Constraints Test 2](images/constraint-2.png)
 </details>
 
-### Фаза 4: Disaster Recovery (Бэкап и Восстановление)
-> **Цель:** Проверить возможность полного восстановления данных при их физическом или логическом уничтожении (DROP DATABASE).
-* **Результат:** База данных и все записи успешно восстановлены за секунды из SQL-дампа. Потерь данных нет.
-<details>
-  <summary>📸 Скриншоты: DROP DATABASE и Успешное восстановление</summary>
-  
-  ![Drop DB](images/drop-db.png)
-  ![Recovered DB](images/recovered-db.png)
+### Фаза 4: Disaster Recovery (Бекап та Відновлення)
+> **Мета:** Перевірити можливість повного відновлення даних при їхньому фізичному чи логічному знищенні (DROP DATABASE).
+* **Результат:** База даних та всі записи успішно відновлені за секунди з SQL-дампа. Втрат даних немає.
+<details> 
+<summary>📸 Скріншоти: DROP DATABASE та Успішне відновлення</summary> 
+
+![Drop DB](images/drop-db.png) 
+![Recovered DB](images/recovered-db.png)
 </details>
 
 ---
+## 🚀 Інструкція з відтворення (Step-by-Step Guide)
 
-## 🚀 Инструкция по воспроизведению (Step-by-Step Guide)
+Якщо ви хочете розгорнути цей тестовий стенд на своєму Ubuntu-сервері та повторити перевірки, дотримуйтесь інструкцій нижче.
 
-Если вы хотите развернуть этот тестовый стенд на своем Ubuntu-сервере и повторить проверки, следуйте инструкции ниже.
-
-### Шаг 1: Установка сервера
-```bash
+### Крок 1: Встановлення сервера
+``` bash
 sudo apt update
 sudo apt install mysql-server -y
 sudo systemctl status mysql
-```
+````
 
-### Шаг 2: Обход защиты (systemd) и создание тестовой среды
-Останавливаем БД и внедряем бэкдор
+### Крок 2: Обхід захисту (systemd) та створення тестового середовища
+Зупиняємо БД та впроваджуємо бекдор
 
-```bash
+``` bash
 sudo systemctl stop mysql
 sudo sed -i '/\[mysqld\]/a skip-grant-tables' /etc/mysql/mysql.conf.d/mysqld.cnf
 sudo systemctl start mysql
-```
-Заходим без пароля
-```bash
+````
+Заходимо без пароля
+``` bash
 sudo mysql -u root
-```
-Внутри консоли mysql> выполняем SQL-запросы:
+````
+Всередині консолі mysql> виконуємо SQL-запити:
 
-```bash
+``` bash
 FLUSH PRIVILEGES;
 ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'RootPass123!';
 CREATE DATABASE qa_store;
@@ -112,81 +109,81 @@ CREATE USER 'qa_user'@'localhost' IDENTIFIED BY 'TestPass123!';
 GRANT ALL PRIVILEGES ON qa_store.* TO 'qa_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
-```
+````
 
-Возвращаем сервер в безопасный режим:
-```bash
+Повертаємо сервер у безпечний режим:
+``` bash
 sudo systemctl stop mysql
 sudo sed -i '/skip-grant-tables/d' /etc/mysql/mysql.conf.d/mysqld.cnf
 sudo systemctl start mysql
-```
+````
 
-### Шаг 3: Проведение Security Test (RBAC)
-```bash
+### Крок 3: Проведення Security Test (RBAC)
+``` bash
 mysql -u qa_user -p
-# Вводим пароль: TestPass123!
-```
+# Вводимо пароль: TestPass123!
+````
 
-Пытаемся взломать систему (получаем Access denied):
+Намагаємося зламати систему (отримуємо Access denied):
 
-```bash
+``` bash
 USE mysql;
-```
-### Шаг 4: Тестирование Data Integrity
+````
+### Крок 4: Тестування Data Integrity
 
-В консоли ограниченного пользователя создаем таблицу:
+У консолі обмеженого користувача створюємо таблицю:
 
-```bash
+``` bash
 USE qa_store;
 
-CREATE TABLE customers (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    age INT CHECK (age >= 18)
+CREATE TABLE customers ( 
+id INT AUTO_INCREMENT PRIMARY KEY, 
+email VARCHAR(255) NOT NULL UNIQUE, 
+age INT CHECK (age >= 18)
 );
-#Happy Path (Позитивный тест)
-```
+#Happy Path (Позитивний тест)
+````
 
 
 
-```bash
+``` bash
 INSERT INTO customers (email, age) VALUES ('test@example.com', 25);
-#Negative Tests (Проверка ограничений)
-```
+#Negative Tests (Перевірка обмежень)
+````
 
 
-```bash
-INSERT INTO customers (age) VALUES (30); # Ошибка NOT NULL
-INSERT INTO customers (email, age) VALUES ('test@example.com', 40); # Ошибка UNIQUE
-INSERT INTO customers (email, age) VALUES ('young@example.com', 15); # Ошибка CHECK
+``` bash
+INSERT INTO customers (age) VALUES (30); # Помилка NOT NULL
+INSERT INTO customers (email, age) VALUES ('test@example.com', 40); # Помилка UNIQUE
+INSERT INTO customers (email, age) VALUES ('young@example.com', 15); # Помилка CHECK
 EXIT;
-```
+````
 
-### Шаг 5: Имитация Disaster Recovery
+### Крок 5: Імітація Disaster Recovery
 
-Создаем резервную копию базы данных:
+Створюємо резервну копію бази даних:
 
-```bash
+``` bash
 mysqldump -u root -p qa_store > qa_store_backup.sql
 #Пароль рута: RootPass123!
-```
+````
 
 
-Имитируем катастрофу (заходим под рутом и удаляем БД):
-```bash
+Імітуємо катастрофу (заходимо під рутом і видаляємо БД):
+``` bash
 mysql -u root -p
-```
+````
 
-```bash
+``` bash
 DROP DATABASE qa_store;
 SHOW DATABASES;
 CREATE DATABASE qa_store;
 EXIT;
-```
+````
 
-Восстанавливаем данные из дампа и проверяем успешность:
+Відновлюємо дані з дампа та перевіряємо успішність:
 
-```bash
+``` bash
 mysql -u root -p qa_store < qa_store_backup.sql
 mysql -u root -p -e "USE qa_store; SELECT * FROM customers;"
-```
+````
