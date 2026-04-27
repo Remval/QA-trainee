@@ -7,100 +7,100 @@
   <img src="https://img.shields.io/badge/Status-100%25_Passed-brightgreen?style=flat-square" alt="Passed">
 </p>
 
-## 📌 О проекте
+## 📌 Про проект
 
-Этот проект демонстрирует комплексный E2E-подход к тестированию контейнерной инфраструктуры. В отличие от стандартного функционального тестирования (UI/API), здесь фокус сделан на **DevSecOps-практиках**: отказоустойчивости, изоляции сетей, мониторинге нагрузок и поиске уязвимостей в базовых образах (CVE).
+Цей проект демонструє комплексний E2E підхід до тестування контейнерної інфраструктури. На відміну від стандартного функціонального тестування (UI/API), тут фокус зроблено на **DevSecOps-практиках**: відмовостійкості, ізоляції мереж, моніторингу навантажень та пошуку вразливостей у базових образах (CVE).
 
-**Тестовый стенд:** `Ubuntu 24.04 LTS` | `Docker Compose` | `WordPress + MySQL`
+**Тестовий стенд:** `Ubuntu 24.04 LTS` | `Docker Compose` | `WordPress + MySQL`
 
 ---
 
-## 📊 Сводка результатов тестирования
+## 📊 Зведення результатів тестування
 
-| ID | Тип тестирования | Инструмент | Проверяемый компонент | Статус |
+| ID | Тип тестування Інструмент | Перевірюваний компонент | Статус |
 |:---|:---|:---|:---|:---:|
-| **TC-01** | `Smoke / Networking` | Docker CLI | Развертывание и изоляция портов БД | ✅ PASS |
-| **TC-02** | `Internal API` | cURL (Alpine) | Внутренняя DNS-маршрутизация | ✅ PASS |
-| **TC-03** | `Resilience` | Docker Volumes | Сохранность данных при краше БД | ✅ PASS |
-| **TC-04** | `Security (CVE)` | AquaSec Trivy | Уязвимости базовых образов | ⚠️ WARN |
-| **TC-05** | `Load / Stress` | Apache Benchmark | Стабильность под трафиком (1k req) | ✅ PASS |
+| **TC-01** | `Smoke/Networking` | Docker CLI | Розгортання та ізоляція портів БД | ✅ PASS |
+| **TC-02** | `Internal API` | CURL (Alpine) | Внутрішня DNS-маршрутизація ✅ PASS |
+| **TC-03** | `Resilience` | Docker Volumes | Збереження даних при фарбуванні БД ✅ PASS |
+| **TC-04** | 'Security (CVE)' | AquaSec Trivy | Вразливості базових образів ⚠️ WARN |
+| **TC-05** | `Load/Stress` | Apache Benchmark Стабільність під трафіком (1k req) ✅ PASS |
 
 ---
 
-## 🛠 Подробные Тест-кейсы и Отчеты
+## 🛠 Детальні Тест-кейси та Звіти
 
-### 1. Тестирование развертывания и сетевой изоляции (Smoke)
-> **Цель:** Убедиться, что сервисы поднимаются корректно, а критичные порты (MySQL 3306) не торчат наружу.
-* **Шаги:** Запуск среды командой `docker compose up -d`. Анализ проброса портов через `docker ps`.
-* **Фактический результат:** Web-сервер успешно отдает порт 80. База данных изолирована внутри сети `qa-docker-test_default`, доступ извне заблокирован (Connection refused).
-<details>
-  <summary>📸 Показать скриншот (Console & UI)</summary>
-  
-  ![Docker PS](images/docker-ps.png)
-  ![WP Start](images/wp-start.png)
+### 1. Тестування розгортання та мережевої ізоляції (Smoke)
+> **Мета:** Переконатися, що сервіси піднімаються коректно, а критичні порти (MySQL 3306) не стирчать назовні.
+* **Кроки:** Запуск середовища командою `docker compose up -d`. Аналіз прокидання портів через `docker ps`.
+* **Фактичний результат:** Web-сервер успішно віддає порт 80. База даних ізольована всередині мережі `qa-docker-test_default`, доступ ззовні заблокований (Connection refused).
+<details> 
+<summary>📸 Показати скріншот (Console & UI)</summary> 
+
+![Docker PS](images/docker-ps.png) 
+![WP Start](images/wp-start.png)
 </details>
 
-### 2. Тестирование внутренней маршрутизации (Internal API)
-> **Цель:** Проверить доступность микросервисов внутри закрытой виртуальной сети Docker.
-* **Шаги:** Запуск изолированного Alpine-контейнера с отправкой `curl -I -s http://qa_test_web`.
-* **Фактический результат:** Получен ответ `HTTP/1.1 200 OK`. Служба обнаружения сервисов (Docker DNS) работает без сбоев.
-<details>
-  <summary>📸 Показать скриншот (cURL Response)</summary>
-  
-  ![cURL Test](images/curl-test.png)
+### 2. Тестування внутрішньої маршрутизації (Internal API)
+> **Мета:** Перевірити доступність мікросервісів усередині закритої віртуальної мережі Docker.
+* **Кроки:** Запуск ізольованого Alpine-контейнера з відправкою `curl -I -s http://qa_test_web`.
+* **Фактичний результат:** Отримана відповідь `HTTP/1.1 200 OK`. Служба виявлення послуг (Docker DNS) працює без збоїв.
+<details> 
+<summary>📸 Показати скріншот (cURL Response)</summary> 
+
+![cURL Test](images/curl-test.png)
 </details>
 
-### 3. Краш-тест и отказоустойчивость (Resilience & Data Persistence)
-> **Цель:** Доказать, что при фатальном сбое контейнера базы данных пользовательские данные не пропадают.
-* **Шаги:**
-  1. Жесткое удаление запущенной БД: `docker rm -f qa_test_db`.
-  2. Подтверждение падения приложения (White screen / DB Error).
-  3. Перезапуск инфраструктуры: `docker compose up -d`.
-* **Фактический результат:** Приложение полностью восстановилось. Данные сохранены благодаря внешнему монтированию Docker Volumes (`db_data` и `wp_data`).
-<details>
-  <summary>📸 Показать скриншоты (Crash & Recovery)</summary>
-  
-  ![DB Crash](images/db-crash.png)
-  ![Recovery](images/recovery-commands.png)
-  ![WP Recovered](images/wp-recovered.png)
+### 3. Краш-тест і відмовостійкість (Resilience & Data Persistence)
+> **Мета:** Довести, що при фатальному збої контейнера бази даних дані користувача не пропадають.
+* **Кроки:** 
+1. Жорстке видалення запущеної БД: `docker rm -f qa_test_db`. 
+2. Підтвердження падіння програми (White screen/DB Error). 
+3. Перезапуск інфраструктури: `docker compose up -d`.
+* **Фактичний результат:** Додаток повністю відновився. Дані збережені завдяки зовнішньому монтуванню Docker Volumes (`db_data` та `wp_data`).
+<details> 
+<summary>📸 Показати скріншоти (Crash & Recovery)</summary> 
+
+![DB Crash](images/db-crash.png) 
+![Recovery](images/recovery-commands.png) 
+![WP Recovered](images/wp-recovered.png)
 </details>
 
-### 4. Сканирование безопасности (Vulnerability Scanning & CVE Analysis)
-> **Цель:** Проактивный поиск известных уязвимостей (CVE) в используемых Docker-образах.
+### 4. Сканування безпеки (Vulnerability Scanning & CVE Analysis)
+> **Мета:** Проактивний пошук відомих уразливостей (CVE) у використовуваних Docker-образах.
 
-#### ⚠️ Управление инцидентом (Incident Response & Troubleshooting)
+#### ⚠️ Управління інцидентом (Incident Response & Troubleshooting)
 
-В процессе проведения теста на сканирование безопасности среда столкнулась с последствиями **Supply Chain атаки**, произошедшей в марте 2026 года.
+У процесі проведення тесту на сканування безпеки середовище зіштовхнулося з наслідками **Supply Chain атаки**, що відбулася у березні 2026 року.
 
-1. **🚫 Попытка 1 (Провал):** Стандартный метод запуска сканера (из реестра Docker Hub) не сработал.
+1. **🚫 Спроба 1 (Провал):** Стандартний метод запуску сканера (з реєстру Docker Hub) не спрацював.
    
-   *Команда:*
-   ```bash
-   docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image wordpress:latest
+   *Команда:* 
+``` bash 
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image 
 
-   Результат (Фактическая ошибка):
-   Error response from daemon: manifest for aquasec/trivy:latest not found: manifest unknown
+Результат (Фактична помилка): 
+Error response from daemon: manifest for aquasec/trivy: 
 
-   Попытка 2 (Фикс): Процесс тестирования был оперативно адаптирован. Источник образа был изменен на официальный, безопасный реестр GitHub Container Registry (GHCR), который не был затронут атакой.
+Спроба 2 (Фікс): Процес тестування оперативно адаптований. Джерело образу було змінено на офіційний, безпечний реєстр GitHub Container Registry (GHCR), який не торкнувся атаки. 
+```
+``` bash 
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/aquasecurity/trivy:latest image
+```
+* **Фактичний результат:** Виявлено вразливості рівня `MEDIUM` (зокрема, у бібліотеці `zlib1g` CVE-2026-27171). Дані зібрані для передачі у відділ розробки/DevOps.
+<details> 
+<summary>📸 Показати скріншот (Trivy Report)</summary> 
 
-   ```bash
-   docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/aquasecurity/trivy:latest image wordpress:latest
-
-* **Фактический результат:** Обнаружены уязвимости уровня `MEDIUM` (в частности, в библиотеке `zlib1g` CVE-2026-27171). Данные собраны для передачи в отдел разработки/DevOps.
-<details>
-  <summary>📸 Показать скриншот (Trivy Report)</summary>
-  
-  ![Trivy Scan](images/trivy-scan.png)
+![Trivy Scan](images/trivy-scan.png)
 </details>
 
-### 5. Нагрузочное тестирование (Stress Test)
-> **Цель:** Проверка способности инфраструктуры выдерживать всплески трафика.
-* **Шаги:** Генерация 1000 запросов с 50 параллельными потоками через временный контейнер: `ab -n 1000 -c 50 http://<server-ip>/`.
-* **Фактический результат:** * Успешно выполнено: 100% (0 failed requests).
-  * Среднее время ответа (Mean time per request): `~750 ms`.
-  * Пропускная способность: `~66 req/sec`. Сервер стабилен.
-<details>
-  <summary>📸 Показать скриншот (Apache Benchmark Report)</summary>
-  
-  ![AB Report](images/ab-report.png)
+### 5. Навантажувальне тестування (Stress Test)
+> **Мета:** Перевірка можливості інфраструктури витримувати сплески трафіку.
+* **Кроки:** Генерація 1000 запитів з 50 паралельними потоками через тимчасовий контейнер: `ab -n 1000 -c 50 http://<server-ip>/`.
+* **Фактичний результат:** * Успішно виконано: 100% (0 failed requests). 
+* Середній час відповіді (Mean time per request): `~750 ms`. 
+* Пропускна спроможність: `~66 req/sec`. Сервер стабільний.
+<details> 
+<summary>📸 Показати скріншот (Apache Benchmark Report)</summary> 
+
+![AB Report](images/ab-report.png)
 </details>
