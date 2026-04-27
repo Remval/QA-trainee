@@ -15,15 +15,15 @@
 
 ---
 
-## 📊 Зведення результатів тестування
+### 📊 Зведення результатів тестування (Infrastucture & Docker)
 
-| ID | Тип тестування Інструмент | Перевірюваний компонент | Статус |
-|:---|:---|:---|:---|:---:|
-| **TC-01** | `Smoke/Networking` | Docker CLI | Розгортання та ізоляція портів БД | ✅ PASS |
-| **TC-02** | `Internal API` | CURL (Alpine) | Внутрішня DNS-маршрутизація ✅ PASS |
-| **TC-03** | `Resilience` | Docker Volumes | Збереження даних при фарбуванні БД ✅ PASS |
-| **TC-04** | 'Security (CVE)' | AquaSec Trivy | Вразливості базових образів ⚠️ WARN |
-| **TC-05** | `Load/Stress` | Apache Benchmark Стабільність під трафіком (1k req) ✅ PASS |
+| ID | Тип тестування | Інструмент | Перевірюваний компонент | Статус |
+|:---:|:---|:---|:---|:---:|
+| **TC-01** | `Smoke/Networking` | Docker CLI | Розгортання та ізоляція портів БД | ✅ **PASS** |
+| **TC-02** | `Internal API` | CURL (Alpine) | Внутрішня DNS-маршрутизація | ✅ **PASS** |
+| **TC-03** | `Resilience` | Docker Volumes | Збереження даних при перезапуску БД | ✅ **PASS** |
+| **TC-04** | `Security (CVE)` | AquaSec Trivy | Вразливості базових образів | ⚠️ **WARN** |
+| **TC-05** | `Load/Stress` | Apache Benchmark | Стабільність під трафіком (1k req) | ✅ **PASS** |
 
 ---
 
