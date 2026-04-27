@@ -7,178 +7,177 @@
   <img src="https://img.shields.io/badge/Status-100%25_Passed-brightgreen?style=flat-square" alt="Passed">
 </p>
 
-## 📌 О проекте
+## 📌 Про проект
 
-Этот проект представляет собой глубокий QA и Security аудит СУБД PostgreSQL на bare-metal сервере Ubuntu. В отличие от стандартного тестирования БД, фокус сделан на специфических механизмах защиты PostgreSQL: изоляции на уровне схем (Schemas), продвинутой валидации данных через регулярные выражения (Regex Constraints) на уровне ядра БД и сценариях послеаварийного восстановления (Disaster Recovery).
+Цей проект є глибоким QA і Security аудит СУБД PostgreSQL на bare-metal сервері Ubuntu. На відміну від стандартного тестування БД, фокус зроблено на специфічних механізмах захисту PostgreSQL: ізоляції на рівні схем (Schemas), просунутої валідації даних через регулярні вирази (Regex Constraints) на рівні ядра БД та сценаріях післяаварійного відновлення (Disaster Recovery).
 
-**Тестовый стенд:** `Ubuntu 24.04 LTS` | `PostgreSQL 16+` | `Терминал Linux (CLI)`
+**Тестовий стенд:** `Ubuntu 24.04 LTS` | `PostgreSQL 16+` | `Термінал Linux (CLI)`
 
 ---
 
-## 📊 Сводка результатов тестирования
+## 📊 Зведення результатів тестування
 
-| Фаза | Тип тестирования | Описание | Статус |
+| Фаза | Тип тестування Опис | Статус |
 |:---|:---|:---|:---:|
-| **1** | `Deployment & Smoke` | Установка СУБД и проверка работы системного демона | ✅ PASS |
-| **2** | `Security / RBAC` | Настройка Peer/TCP аутентификации, изоляция схем данных | ✅ PASS |
-| **3** | `Data Integrity` | Валидация входных данных через Regex CHECK Constraint | ✅ PASS |
-| **4** | `Disaster Recovery` | Создание дампа (`pg_dump`), симуляция потери БД и восстановление | ✅ PASS |
+| **1** | `Deployment & Smoke` | Встановлення СУБД та перевірка роботи системного демона ✅ PASS |
+| **2** | `Security/RBAC` | Налаштування Peer/TCP аутентифікації, ізоляція схем даних ✅ PASS |
+| **3** | `Data Integrity` | Валідація вхідних даних через Regex CHECK Constraint ✅ PASS |
+| **4** | `Disaster Recovery` | Створення дампа (`pg_dump`), симуляція втрати БД та відновлення ✅ PASS |
 
 ---
 
-## 🛠 Подробные Тест-кейсы и Отчеты
+## 🛠 Детальні Тест-кейси та Звіти
 
-### Фаза 1: Установка и Smoke Test
-> **Цель:** Развертывание PostgreSQL и дополнительных утилит `postgresql-contrib`, проверка стабильности работы службы.
-* **Результат:** Сервис успешно запущен, менеджер процессов функционирует штатно (`active (exited)`).
-<details>
-  <summary>📸 Скриншот: Успешный старт сервиса</summary>
-  
-  ![PostgreSQL Status](images/pg-status.png) </details>
+### Фаза 1: Встановлення та Smoke Test
+> **Мета:** Розгортання PostgreSQL та додаткових утиліт `postgresql-contrib`, перевірка стабільності роботи служби.
+* **Результат:** Сервіс успішно запущений, менеджер процесів функціонує штатно (`active (exited)`).
+<details> 
+<summary>📸 Скріншот: Успішний старт сервісу</summary> 
 
-### Фаза 2: Тестирование безопасности (Schema Isolation & RBAC)
-> **Цель:** Проверка невозможности горизонтальной эскалации привилегий и чтения данных из чужих изолированных схем.
+![PostgreSQL Status](images/pg-status.png) </details>
 
-Создана БД `qa_pg_store` со скрытой административной схемой `admin_secrets` и таблицей ключей. Создан ограниченный пользователь `qa_pg_user` с доступом только на подключение к БД.
-* **Тест-кейс (Негативный):** Подключение ограниченным пользователем по TCP/IP (обход локального Peer auth) и попытка `SELECT` запроса к таблице `admin_secrets.keys`.
-* **Ожидаемый / Фактический результат:** Ожидаемый отказ в доступе. Получена ошибка `ERROR: permission denied for schema admin_secrets`. Изоляция схем работает корректно.
-<details>
-  <summary>📸 Скриншот: Permission Denied (Schema Test)</summary>
-  
-  ![Access Denied](images/pg-access-denied.png) </details>
+### Фаза 2: Тестування безпеки (Schema Isolation & RBAC)
+> **Мета:** Перевірка неможливості горизонтальної ескалації привілеїв та читання даних із чужих ізольованих схем.
 
-### Фаза 3: Продвинутая целостность данных (Advanced Data Integrity)
-> **Цель:** Использование регулярных выражений (Regex) на стороне БД для защиты от некорректных пользовательских данных в обход клиентской валидации.
+Створено БД `qa_pg_store` з прихованою адміністративною схемою `admin_secrets` та таблицею ключів. Створено обмежений користувач qa_pg_user з доступом тільки на підключення до БД.
+* **Тест-кейс (Негативний):** Підключення обмеженим користувачем по TCP/IP (обхід локального Peer auth) та спроба `SELECT` запиту до таблиці `admin_secrets.keys`.
+* **Очікуваний / Фактичний результат:** Очікувана відмова у доступі. Отримана помилка `ERROR: permission denied for schema admin_secrets`. Ізоляція схем працює коректно.
+<details> 
+<summary>📸 Скріншот: Permission Denied (Schema Test)</summary> 
 
-Создана таблица `clients` с ограничением `CHECK (phone ~ '^\+380[0-9]{9}$')` (принимаются только украинские номера в международном формате).
-1. **Позитивный тест:** Вставка валидного номера `+380501234567` -> Успешно (`INSERT 0 1`).
-2. **Негативный тест:** Попытка вставки номера в неверном формате `050-123-45-67`.
-* **Результат:** БД заблокировала транзакцию, выдав ошибку `ERROR: new row for relation "clients" violates check constraint`. Данные надежно защищены на уровне БД.
-<details>
-  <summary>📸 Скриншоты: Срабатывание Regex Constraint</summary>
-  
-  ![Regex Test](images/pg-regex-test.png) </details>
+![Access Denied](images/pg-access-denied.png) </details>
 
-### Фаза 4: Disaster Recovery (Бэкап и Восстановление)
-> **Цель:** Проверка регламента резервного копирования и восстановления после катастрофического сбоя (DROP DATABASE).
-* **Шаги:**
-  1. Создание логического дампа БД с помощью утилиты `pg_dump`.
-  2. Имитация катастрофы: переключение в БД `postgres` и выполнение `DROP DATABASE qa_pg_store;`. Проверка через `\l`.
-  3. Восстановление: создание пустой БД и заливка дампа через CLI.
-* **Результат:** База данных полностью восстановлена, проверочный `SELECT` подтвердил наличие ранее внесенных данных. Потерь нет.
-<details>
-  <summary>📸 Скриншоты: DROP DATABASE и Успешное восстановление</summary>
-  
-  ![Drop DB](images/pg-drop-db.png) ![Recovered DB](images/pg-recovered-db.png) </details>
+### Фаза 3: Просунута цілісність даних (Advanced Data Integrity)
+> **Мета:** Використання регулярних виразів (Regex) на стороні БД для захисту від некоректних даних користувача в обхід клієнтської валідації.
+
+Створено таблицю `clients` з обмеженням `CHECK (phone ~ '^\+380[0-9]{9}$')` (приймаються лише українські номери у міжнародному форматі).
+1. **Позитивний тест:** Вставка валідного номера `+380501234567` -> Успішно (`INSERT 0 1`).
+2. **Негативний тест:** Спроба вставки номера в неправильному форматі `050-123-45-67`.
+* **Результат:** БД заблокувала транзакцію, видавши помилку `ERROR: New row for relation "clients" violates check constraint`. Дані надійно захищені лише на рівні БД.
+<details> 
+<summary>📸 Скріншоти: Спрацювання Regex Constraint</summary> 
+
+![Regex Test](images/pg-regex-test.png) </details>
+
+### Фаза 4: Disaster Recovery (Бекап та Відновлення)
+> **Мета:** Перевірка регламенту резервного копіювання та відновлення після катастрофічного збою (DROP DATABASE).
+* **Кроки:** 
+1. Створення логічного дампа БД за допомогою утиліти `pg_dump`. 
+2. Імітація катастрофи: перемикання в БД `postgres` та виконання `DROP DATABASE qa_pg_store;`. Перевірка через 'l'. 
+3. Відновлення: створення порожній БД та заливання дампа через CLI.
+* **Результат:** База даних повністю відновлена, перевірочний `SELECT` підтвердив наявність раніше внесених даних. Втрат немає.
+<details> 
+<summary>📸 Скріншоти: DROP DATABASE та Успішне відновлення</summary> 
+
+![Drop DB](images/pg-drop-db.png) ![Recovered DB](images/pg-recovered-db.png) </details>
 
 ---
+## 🚀 Інструкція з відтворення (Step-by-Step Guide)
 
-## 🚀 Инструкция по воспроизведению (Step-by-Step Guide)
+Для розгортання стенду та повторення тестів на вашому сервері виконайте такі кроки:
 
-Для развертывания стенда и повторения тестов на вашем сервере, выполните следующие шаги:
-
-### Шаг 1: Установка сервера
-```bash
+### Крок 1: Встановлення сервера
+``` bash
 sudo apt update
 sudo apt install postgresql postgresql-contrib -y
 sudo systemctl status postgresql
 
-### Шаг 2: Создание схем и настройка доступов
-Заходим под системным пользователем postgres:
+### Крок 2: Створення схем та налаштування доступів
+Заходимо під системним користувачем postgres:
 
-```bash
+``` bash
 sudo -u postgres psql
-```
-Создаем базу, изолированную схему и ограниченного пользователя:
+````
+Створюємо базу, ізольовану схему та обмеженого користувача:
 
-```bash
+``` bash
 CREATE DATABASE qa_pg_store;
-```
-```bash
+````
+``` bash
 \c qa_pg_store
-```
-```bash
+````
+``` bash
 CREATE SCHEMA admin_secrets;
 CREATE TABLE admin_secrets.keys (key_value VARCHAR(100));
 CREATE USER qa_pg_user WITH PASSWORD 'TestPass123!';
 GRANT CONNECT ON DATABASE qa_pg_store TO qa_pg_user;
-```
-```bash
+````
+``` bash
 \q
-```
-### Шаг 3: Проведение Security Test (Schema Isolation)
-Подключаемся по TCP/IP от лица ограниченного пользователя:
+````
+### Крок 3: Проведення Security Test (Schema Isolation)
+Підключаємося через TCP/IP від ​​обмеженого користувача:
 
-```bash
+``` bash
 psql -h 127.0.0.1 -U qa_pg_user -d qa_pg_store
-```
+````
 # Пароль: TestPass123!
 
-Пытаемся прочитать секретную схему:
-```bash
+Намагаємося прочитати секретну схему:
+``` bash
 SELECT * FROM admin_secrets.keys;
-```
--- Ожидаем: ERROR: permission denied for schema admin_secrets
+````
+-- Очікуємо: ERROR: permission denied for schema admin_secrets
 
-```bash
+``` bash
 \q
-```
-### Шаг 4: Тестирование Data Integrity (Regex)
-Заходим под админом и создаем таблицу с Regex-проверкой:
-```bash
+````
+### Крок 4: Тестування Data Integrity (Regex)
+Заходимо під адміном та створюємо таблицю з Regex-перевіркою:
+``` bash
 sudo -u postgres psql -d qa_pg_store
-```
-```bash
-CREATE TABLE clients (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    phone VARCHAR(15) CHECK (phone ~ '^\+380[0-9]{9}$')
+````
+``` bash
+CREATE TABLE clients ( 
+id SERIAL PRIMARY KEY, 
+name VARCHAR(100) NOT NULL, 
+phone VARCHAR(15) CHECK (phone ~ '^\+380[0-9]{9}$')
 );
 GRANT ALL ON clients TO qa_pg_user;
 GRANT USAGE ON SEQUENCE clients_id_seq TO qa_pg_user;
-```
-```bash
+````
+``` bash
 \q
-```
-Заходим под QA-пользователем и проводим тесты:
-```bash
+````
+Заходимо під QA-користувачем та проводимо тести:
+``` bash
 psql -h 127.0.0.1 -U qa_pg_user -d qa_pg_store
-```
+````
 -- Happy Path
-```bash
+``` bash
 INSERT INTO clients (name, phone) VALUES ('Ivan', '+380501234567');
-```
--- Negative Test (Срабатывание Regex CHECK)
-```bash
+````
+-- Negative Test (Спрацьовування Regex CHECK)
+``` bash
 INSERT INTO clients (name, phone) VALUES ('Hacker', '050-123-45-67');
-```
-```bash
+````
+``` bash
 \q
-```
-### Шаг 5: Имитация Disaster Recovery
-Создаем резервную копию:
-```bash
+````
+### Крок 5: Імітація Disaster Recovery
+Створюємо резервну копію:
+``` bash
 sudo -u postgres pg_dump qa_pg_store > qa_pg_store_backup.sql
-```
-Удаляем базу (имитация потери):
-```bash
+````
+Видаляємо базу (імітація втрати):
+``` bash
 sudo -u postgres psql -d postgres
-```
-```bash
+````
+``` bash
 DROP DATABASE qa_pg_store;
-```
-```bash
+````
+``` bash
 \l
-```
-```bash
+````
+``` bash
 \q
-```
-Восстанавливаем данные из дампа:
-```bash
+````
+Відновлюємо дані з дампа:
+``` bash
 sudo -u postgres psql -c "CREATE DATABASE qa_pg_store;"
-sudo -u postgres psql qa_pg_store < qa_pg_store_backup.sql
-```
-Проверяем восстановленные данные:
-```bash
+sudo -u postgres psql qa_pg_store <qa_pg_store_backup.sql
+````
+Перевіряємо відновлені дані:
+``` bash
 sudo -u postgres psql -d qa_pg_store -c "SELECT * FROM clients;"
-```
+````
